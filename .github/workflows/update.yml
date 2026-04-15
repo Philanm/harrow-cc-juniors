@@ -2,29 +2,22 @@ name: Auto-Update Junior Register
 
 on:
   schedule:
-    # ── Player list refresh (from Google Sheet) ──────────────────────────────
     # All times UTC. UK is BST (UTC+1) Apr–Oct.
     - cron: '0 6 * * 1'    # Monday    06:00 UTC = 07:00 BST  → refresh players
     - cron: '0 6 * * 3'    # Wednesday 06:00 UTC = 07:00 BST  → refresh players
     - cron: '0 0 * * 0'    # Sunday    00:00 UTC = 01:00 BST  → refresh players
-
-    # ── Google Drive export (after each Sunday session) ──────────────────────
-    # Sessions run on Sundays. Export at 22:00 UTC = 23:00 BST to give coaches
-    # the full day to mark attendance before the file is saved to Drive.
     - cron: '0 22 * * 0'   # Sunday    22:00 UTC = 23:00 BST  → export to Drive
 
-  # Manual trigger from the GitHub Actions tab
   workflow_dispatch:
     inputs:
       job:
-        description: 'Which job to run'
+        description: 'Which job to run?'
         required: true
         default: 'update-players'
         type: choice
         options:
           - update-players
           - export-to-drive
-          - both
 
 env:
   FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: true
@@ -35,16 +28,9 @@ jobs:
   update-players:
     name: Refresh player list
     runs-on: ubuntu-latest
-    # Run on schedule (Monday/Wednesday/Sunday 1am) OR manual trigger
-    if: |
-      github.event_name == 'schedule' && (
-        contains(github.event.schedule, '0 6 * * 1') ||
-        contains(github.event.schedule, '0 6 * * 3') ||
-        contains(github.event.schedule, '0 0 * * 0')
-      ) ||
-      github.event_name == 'workflow_dispatch' && (
-        inputs.job == 'update-players' || inputs.job == 'both'
-      )
+    if: >
+      (github.event_name == 'workflow_dispatch' && github.event.inputs.job == 'update-players') ||
+      (github.event_name == 'schedule' && github.event.schedule != '0 22 * * 0')
 
     permissions:
       contents: write
@@ -85,12 +71,9 @@ jobs:
   export-to-drive:
     name: Export session to Google Drive
     runs-on: ubuntu-latest
-    # Run on Sunday evening schedule OR manual trigger
-    if: |
-      github.event_name == 'schedule' && contains(github.event.schedule, '0 22 * * 0') ||
-      github.event_name == 'workflow_dispatch' && (
-        inputs.job == 'export-to-drive' || inputs.job == 'both'
-      )
+    if: >
+      (github.event_name == 'workflow_dispatch' && github.event.inputs.job == 'export-to-drive') ||
+      (github.event_name == 'schedule' && github.event.schedule == '0 22 * * 0')
 
     steps:
       - name: Checkout repository
