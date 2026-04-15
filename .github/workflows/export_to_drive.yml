@@ -7,18 +7,14 @@ on:
   schedule:
     - cron: '0 17 * * *'   # Example: every day at 17:00 UTC
 
-jobs:
-  export:
-    runs-on: ubuntu-latest
-
-    steps:
+steps:
       - name: Checkout repository
         uses: actions/checkout@v4
 
       - name: Set up Python
         uses: actions/setup-python@v5
         with:
-          python-version: '3.11'   # or 3.12
+          python-version: '3.11'
 
       - name: Install dependencies
         run: |
@@ -27,10 +23,20 @@ jobs:
 
       - name: Write service account key file
         run: |
-          echo '${{ secrets.SERVICE_ACCOUNT_JSON }}' > service-account-key.json
+          cat > service-account-key.json << 'EOL'
+          ${{ secrets.SERVICE_ACCOUNT_JSON }}
+          EOL
 
       - name: Run export script
         env:
           GOOGLE_DRIVE_FOLDER_ID: ${{ secrets.GOOGLE_DRIVE_FOLDER_ID }}
         run: python export_to_drive.py
-        
+
+              - name: Verify service account file
+        run: |
+          echo "=== File size ==="
+          ls -l service-account-key.json
+          echo "=== First 5 lines ==="
+          head -n 5 service-account-key.json
+          echo "=== Is valid JSON? ==="
+          python -m json.tool service-account-key.json > /dev/null && echo "Valid JSON ✓" || echo "Invalid JSON ✗"
