@@ -62,10 +62,13 @@ def fetch_firebase_session(session_key):
     try:
         with urllib.request.urlopen(url, timeout=20) as resp:
             raw = resp.read().decode("utf-8").strip()
-            print(f"  Raw response (first 300 chars): {raw[:300]}")
             if not raw or raw == "null":
                 return {}
-            return json.loads(raw)
+            parsed = json.loads(raw)
+            # Firebase returns an array when keys are integers — convert to dict
+            if isinstance(parsed, list):
+                return {str(i): v for i, v in enumerate(parsed) if v is not None}
+            return parsed
     except Exception as e:
         print(f"  WARNING: Could not fetch Firebase data: {e}")
         return {}
