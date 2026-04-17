@@ -2,9 +2,9 @@ name: Refresh Player List
 
 on:
   schedule:
-    - cron: '0 6 * * 1'    # Monday    06:00 UTC = 07:00 BST
-    - cron: '0 6 * * 3'    # Wednesday 06:00 UTC = 07:00 BST
-    - cron: '0 0 * * 0'    # Sunday    00:00 UTC = 01:00 BST
+    # All times UTC. UK is BST (UTC+1) Apr–Oct.
+    - cron: '0 1 * * 5'    # Friday    01:00 UTC = 02:00 BST
+    - cron: '0 1 * * 0'    # Sunday    01:00 UTC = 02:00 BST
   workflow_dispatch:
 
 env:
